@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.streamlit/secrets.toml
+
+# keep client data out of the repo
+*.xlsx
+*.xls
+*.csv
+*.docx
+*.pdf
+*.zip
