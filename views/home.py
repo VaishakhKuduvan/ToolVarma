@@ -14,7 +14,7 @@ def status(done, ready, locked_text):
     if done:
         st.badge("Complete", icon=ICONS["done"], color="green")
     elif ready:
-        st.badge("Ready to start", icon=ICONS["pending"], color="blue")
+        st.badge("Ready to start", icon=ICONS["pending"], color="primary")
     else:
         st.badge(locked_text, icon=ICONS["lock"], color="gray")
 

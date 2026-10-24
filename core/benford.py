@@ -31,8 +31,8 @@ REQUIRED_COLS = [
 ]
 
 # Modern colour palette
-COLOR_OBSERVED       = '#3B82F6'   # vibrant blue
-COLOR_OBSERVED_LIGHT = '#93C5FD'   # light blue
+COLOR_OBSERVED       = '#0F8B8D'   # brand teal
+COLOR_OBSERVED_LIGHT = '#7CC9CA'   # light teal
 COLOR_EXPECTED       = '#EF4444'   # red
 COLOR_SPIKE          = '#F59E0B'   # amber
 COLOR_SPIKE_DARK     = '#D97706'   # dark amber

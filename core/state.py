@@ -113,8 +113,8 @@ def sidebar_status():
         else:
             st.badge("Risk: not assessed", color="gray")
         if st.session_state.overall_materiality is not None:
-            st.badge(f"OM ₹ {st.session_state.overall_materiality:,.2f} L", color="blue")
-            st.badge(f"PM ₹ {st.session_state.performance_materiality:,.2f} L", color="blue")
+            st.badge(f"OM ₹ {st.session_state.overall_materiality:,.2f} L", color="primary")
+            st.badge(f"PM ₹ {st.session_state.performance_materiality:,.2f} L", color="primary")
         else:
             st.badge("Materiality: not computed", color="gray")
         if st.session_state.daybook_name:

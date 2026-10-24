@@ -19,28 +19,37 @@ baseRadius = "0.5rem"
 showWidgetBorder = true
 metricValueFontSize = "1.6rem"
 
+# Palette: Midnight Navy #101C2C, Navy #1F3548, Teal #0F8B8D, Mist #F4F6F8, White #FFFFFF.
+# Buttons and links use a deeper teal (#0B7476) so white text meets WCAG AA contrast (5.6:1);
+# on dark backgrounds links use a lighter teal (#3FB8BA, 7.2:1).
 [theme.light]
-primaryColor = "#1D4E89"
-backgroundColor = "#FBFBF9"
-secondaryBackgroundColor = "#F1F2F4"
-textColor = "#1B2430"
-linkColor = "#1D4E89"
-borderColor = "#DCDFE4"
+primaryColor = "#0B7476"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F6F8"
+textColor = "#101C2C"
+linkColor = "#0B7476"
+borderColor = "#DDE3EA"
 
 [theme.light.sidebar]
-backgroundColor = "#F3F4F6"
-secondaryBackgroundColor = "#E8EAEE"
-borderColor = "#DCDFE4"
+primaryColor = "#3FB8BA"
+backgroundColor = "#101C2C"
+secondaryBackgroundColor = "#1F3548"
+textColor = "#F4F6F8"
+linkColor = "#3FB8BA"
+borderColor = "#1F3548"
 
 [theme.dark]
-primaryColor = "#3D73B8"
-backgroundColor = "#111418"
-secondaryBackgroundColor = "#1A1F26"
-textColor = "#E4E7EB"
-linkColor = "#8DB4E8"
-borderColor = "#2C333D"
+primaryColor = "#0B7476"
+backgroundColor = "#101C2C"
+secondaryBackgroundColor = "#1F3548"
+textColor = "#F4F6F8"
+linkColor = "#3FB8BA"
+borderColor = "#2A4258"
 
 [theme.dark.sidebar]
-backgroundColor = "#151A20"
-secondaryBackgroundColor = "#1E242C"
-borderColor = "#2C333D"
+primaryColor = "#3FB8BA"
+backgroundColor = "#1F3548"
+secondaryBackgroundColor = "#101C2C"
+textColor = "#F4F6F8"
+linkColor = "#3FB8BA"
+borderColor = "#2A4258"
