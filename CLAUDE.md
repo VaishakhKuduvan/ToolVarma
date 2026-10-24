@@ -18,6 +18,9 @@ These design and UI/UX instructions are mandatory whenever Claude Code is used o
 - If an existing project instruction conflicts with these requirements, identify the conflict and resolve it
   without silently removing existing instructions.
 
+- Use emojis sparingly. Don't put them in front of every title, tab, button, metric and message; prefer clean
+  typography, and where a visual cue is needed, a consistent icon set (e.g. Streamlit's `:material/...:` icons).
+
 **Bottom line:** these standards are compulsory for this tool. The app must look intentionally designed by a
 skilled human designer, feel polished and natural, and work smoothly — not like a generic AI-generated template.
 
