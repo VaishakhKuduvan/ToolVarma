@@ -29,6 +29,10 @@ secondaryBackgroundColor = "#F4F6F8"
 textColor = "#101C2C"
 linkColor = "#0B7476"
 borderColor = "#DDE3EA"
+# Status badges use the "blue" slot, tinted teal to match the palette
+blueColor = "#0F8B8D"
+blueBackgroundColor = "#E3F3F3"
+blueTextColor = "#0B6466"
 
 [theme.light.sidebar]
 primaryColor = "#3FB8BA"
@@ -45,6 +49,9 @@ secondaryBackgroundColor = "#1F3548"
 textColor = "#F4F6F8"
 linkColor = "#3FB8BA"
 borderColor = "#2A4258"
+blueColor = "#3FB8BA"
+blueBackgroundColor = "#123A42"
+blueTextColor = "#5FC4C6"
 
 [theme.dark.sidebar]
 primaryColor = "#3FB8BA"
