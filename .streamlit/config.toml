@@ -3,3 +3,44 @@ maxUploadSize = 200
 
 [browser]
 gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+
+# Shared type and shape. Colours are set per light / dark theme below;
+# the app follows the viewer's system setting.
+[theme]
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+headingFont = "Newsreader:https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600;6..72,700&display=swap"
+headingFontWeights = [700, 600, 600, 600]
+headingFontSizes = ["2.25rem", "1.6rem", "1.25rem", "1.05rem"]
+baseFontSize = 15
+baseRadius = "0.5rem"
+showWidgetBorder = true
+metricValueFontSize = "1.6rem"
+
+[theme.light]
+primaryColor = "#1D4E89"
+backgroundColor = "#FBFBF9"
+secondaryBackgroundColor = "#F1F2F4"
+textColor = "#1B2430"
+linkColor = "#1D4E89"
+borderColor = "#DCDFE4"
+
+[theme.light.sidebar]
+backgroundColor = "#F3F4F6"
+secondaryBackgroundColor = "#E8EAEE"
+borderColor = "#DCDFE4"
+
+[theme.dark]
+primaryColor = "#3D73B8"
+backgroundColor = "#111418"
+secondaryBackgroundColor = "#1A1F26"
+textColor = "#E4E7EB"
+linkColor = "#8DB4E8"
+borderColor = "#2C333D"
+
+[theme.dark.sidebar]
+backgroundColor = "#151A20"
+secondaryBackgroundColor = "#1E242C"
+borderColor = "#2C333D"

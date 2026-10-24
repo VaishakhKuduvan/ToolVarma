@@ -9,34 +9,41 @@ from core.sampling import (BASE_SIZES, DB_REQUIRED, FLOOR, TB_REQUIRED, TB_TOTAL
                            sample_daybook, sample_trial_balance)
 from core.state import FULL, LAKH, XLSX_MIME, daybook_source, file_prefix, materiality_ready, show_error, \
     to_excel_bytes
+from core.ui import ICONS, page_header
 
-st.title("📋 Sampling — SA 530")
+page_header("Sampling", eyebrow="Step 3 · SA 530",
+            intro="Upload a trial balance or a day book. Items at or above performance materiality are always "
+                  "selected; the rest are sampled by value, with targeted picks for common red flags.")
 if not materiality_ready():
-    st.warning("⚠️ Complete **1. Risk Assessment** and **2. Materiality** before sampling.")
-    st.page_link("views/risk.py", label="Go to Risk Assessment", icon="⬅️")
-    st.page_link("views/materiality.py", label="Go to Materiality", icon="⬅️")
+    st.warning("Complete the risk assessment and materiality first. Sampling uses both.")
+    st.page_link("views/risk.py", label="Go to risk assessment", icon=ICONS["back"])
+    st.page_link("views/materiality.py", label="Go to materiality", icon=ICONS["back"])
     st.stop()
 
 risk = st.session_state.risk_level
 PM = st.session_state.performance_materiality * LAKH
 OM = st.session_state.overall_materiality * LAKH
-st.info(f"Risk: **{risk}** | OM: ₹ {OM:,.2f} | PM: ₹ {PM:,.2f}")
+k1, k2, k3 = st.columns(3)
+k1.metric("Risk level", risk, border=True)
+k2.metric("Overall materiality", f"₹ {OM:,.0f}", border=True)
+k3.metric("Performance materiality", f"₹ {PM:,.0f}", border=True)
 
-with st.expander("📐 Sample Size Logic & Rules"):
-    st.dataframe(pd.DataFrame(BASE_SIZES).T.rename_axis("Risk Level").reset_index(), hide_index=True, **FULL)
+with st.expander("How items are selected"):
     st.markdown(
-        "- **≥ PM** → 100% checked (key items)\n"
-        f"- **₹{FLOOR:,} to PM** → sampled (value-weighted / random)\n"
-        f"- **< ₹{FLOOR:,}** → analytical procedures only\n"
-        "- **Targeted red flags:** weekend journals, round figures, vague narrations\n"
-        f"- Trial Balance sample: {TB_TOTAL[risk]} items at {risk} risk, stratified by Schedule III main group")
+        "- **At or above PM:** every item is checked (key items).\n"
+        f"- **₹{FLOOR:,} up to PM:** sampled, weighted by value for sales, purchase and bank vouchers.\n"
+        f"- **Below ₹{FLOOR:,}:** left to analytical procedures.\n"
+        "- **Red flags picked on purpose:** weekend journals, round amounts and vague narrations.\n"
+        f"- **Trial balance:** {TB_TOTAL[risk]} items at {risk} risk, spread across Schedule III main groups.")
+    st.markdown("**Day book sample size per voucher type**")
+    st.dataframe(pd.DataFrame(BASE_SIZES).T.rename_axis("Risk Level").reset_index(), hide_index=True, **FULL)
 
-tab_tb, tab_db = st.tabs(["📒 Trial Balance Sampling", "📖 Day Book Sampling"])
+tab_tb, tab_db = st.tabs(["Trial balance", "Day book"])
 
 # ------------------------------------------------ Trial Balance
 with tab_tb:
     st.caption("Required columns: " + ", ".join(TB_REQUIRED))
-    tb_file = st.file_uploader("Upload Trial Balance (.xlsx/.xls)", type=["xlsx", "xls"], key="tb_up")
+    tb_file = st.file_uploader("Trial balance (.xlsx or .xls)", type=["xlsx", "xls"], key="tb_up")
     if tb_file:
         try:
             tb = pd.read_excel(tb_file)
@@ -47,23 +54,23 @@ with tab_tb:
             else:
                 sel, stats = sample_trial_balance(tb, risk, PM)
                 m1, m2, m3, m4 = st.columns(4)
-                m1.metric("Ledgers in TB", stats["ledgers"])
-                m2.metric("Key Items (≥ PM)", stats["key"])
-                m3.metric("Sampled", stats["sampled"])
-                m4.metric("Total Selected", stats["selected"])
+                m1.metric("Ledgers", stats["ledgers"], border=True)
+                m2.metric("Key items (≥ PM)", stats["key"], border=True)
+                m3.metric("Sampled", stats["sampled"], border=True)
+                m4.metric("Total selected", stats["selected"], border=True)
                 fmt = {c: "{:,.2f}" for c in ["net_opening_balance", "Debit", "Credit", "net_closing_balance",
                                               "abs_closing", "abs_activity", "risk_indicator"]}
                 st.dataframe(sel.style.format(fmt), **FULL)
-                st.download_button("⬇️ Download TB_Sample_Selected.xlsx", to_excel_bytes({"TB_Sample": sel}),
-                                   f"{file_prefix()}TB_Sample_Selected.xlsx", XLSX_MIME)
+                st.download_button("Download selected ledgers (.xlsx)", to_excel_bytes({"TB_Sample": sel}),
+                                   f"{file_prefix()}TB_Sample_Selected.xlsx", XLSX_MIME, icon=ICONS["download"])
         except Exception:
-            show_error("Trial Balance processing failed.", traceback.format_exc())
+            show_error("The trial balance could not be processed.", traceback.format_exc())
 
 # ------------------------------------------------ Day Book
 with tab_db:
     st.caption("Required columns: " + ", ".join(DB_REQUIRED) +
                " · optional: Day, Narrations, Vch No., Date (for red flags and de-duplication)")
-    db_bytes, db_name = daybook_source("db_up")
+    db_bytes, db_name = daybook_source("db_up", "Day book (.xlsx or .xls)")
     if db_bytes:
         try:
             db = pd.read_excel(io.BytesIO(db_bytes))
@@ -73,13 +80,14 @@ with tab_db:
                 st.error(f"Missing required columns: {', '.join(miss)}")
             else:
                 sel, summ = sample_daybook(db, risk, PM)
-                st.markdown("**Stratum Summary**")
+                st.markdown("**Selection by voucher type**")
                 st.dataframe(summ, **FULL, hide_index=True)
-                st.markdown("**Selected Vouchers**")
+                st.markdown(f"**Selected vouchers ({len(sel):,})**")
                 st.dataframe(sel.style.format({c: "{:,.2f}" for c in ["Debit Amount", "Credit Amount", "amount"]}),
                              **FULL)
-                st.download_button("⬇️ Download DayBook_Sample_Selected.xlsx",
+                st.download_button("Download selected vouchers (.xlsx)",
                                    to_excel_bytes({"DayBook_Sample": sel, "Summary": summ}),
-                                   f"{file_prefix()}DayBook_Sample_Selected.xlsx", XLSX_MIME)
+                                   f"{file_prefix()}DayBook_Sample_Selected.xlsx", XLSX_MIME,
+                                   icon=ICONS["download"])
         except Exception:
-            show_error("Day Book processing failed.", traceback.format_exc())
+            show_error("The day book could not be processed.", traceback.format_exc())

@@ -248,7 +248,7 @@ def make_plotly_chart(result, tier_label="", show_deviation=True):
         f"Expected: {ec:,.1f} ({ep:.3f}%)<br>"
         f"Deviation: {dev:+.3f}%<br>"
         f"Z-Statistic: {z:.3f}<br>"
-        f"<b>{'⚠ SPIKE (Z > 1.96)' if z > 1.96 else '✓ Within Bounds'}</b>"
+        f"<b>{'Spike (Z > 1.96)' if z > 1.96 else 'Within bounds'}</b>"
         for d, oc, op, ec, ep, dev, z in zip(
             df['Digit'], df['Observed Count'], df['Observed %'],
             df['Expected Count'], df['Expected %'], df['Deviation %'],
@@ -407,6 +407,22 @@ def make_plotly_chart(result, tier_label="", show_deviation=True):
         )
 
     return fig
+
+def for_screen(fig):
+    """Adapt a chart built for the Excel export (white, titled) to the app, where the test name and
+    statistics are shown above it and the background must follow the light / dark theme."""
+    grid = 'rgba(128, 128, 128, 0.22)'
+    fig.update_layout(
+        title=None, margin=dict(l=56, r=16, t=48, b=48),
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Inter, Segoe UI, sans-serif', color=None),
+        legend=dict(bgcolor='rgba(0,0,0,0)', borderwidth=0),
+    )
+    fig.update_xaxes(gridcolor=grid, linecolor=grid)
+    fig.update_yaxes(gridcolor=grid, linecolor=grid, zerolinecolor=grid)
+    fig.update_annotations(font=dict(size=12))
+    return fig
+
 
 def plotly_to_png_bytes(fig, width=1200, height=600, scale=2):
     """Export a Plotly figure to PNG bytes for Excel embedding via Kaleido."""

@@ -10,23 +10,25 @@ Run with:  streamlit run app.py
 import streamlit as st
 
 from core.state import init_state, sidebar_status
+from core.ui import ICONS, apply_global_styles
 
-st.set_page_config(page_title="Audit Suite", page_icon="🏛️", layout="wide")
+st.set_page_config(page_title="Audit Suite", page_icon=":material/account_balance:", layout="wide")
+apply_global_styles()
 init_state()
 
 PAGES = {
-    "Overview": [
-        st.Page("views/home.py", title="Home", icon="🏠", default=True),
+    "": [
+        st.Page("views/home.py", title="Overview", icon=ICONS["home"], default=True),
     ],
-    "Core audit flow": [
-        st.Page("views/risk.py", title="1. Risk Assessment (SA 315)", icon="🎯"),
-        st.Page("views/materiality.py", title="2. Materiality (SA 320)", icon="💰"),
-        st.Page("views/sampling.py", title="3. Sampling (SA 530)", icon="📋"),
+    "Engagement workflow": [
+        st.Page("views/risk.py", title="Risk assessment", icon=ICONS["risk"]),
+        st.Page("views/materiality.py", title="Materiality", icon=ICONS["materiality"]),
+        st.Page("views/sampling.py", title="Sampling", icon=ICONS["sampling"]),
     ],
-    "Analytics & tools": [
-        st.Page("views/benford.py", title="Benford's Law Analysis", icon="📊"),
-        st.Page("views/ledger_ai.py", title="AI Ledger Mapping", icon="🤖"),
-        st.Page("views/confirmations.py", title="External Confirmations", icon="✉️"),
+    "Analytics and tools": [
+        st.Page("views/benford.py", title="Benford's Law", icon=ICONS["benford"]),
+        st.Page("views/ledger_ai.py", title="AI ledger mapping", icon=ICONS["ai"]),
+        st.Page("views/confirmations.py", title="External confirmations", icon=ICONS["confirmations"]),
     ],
 }
 

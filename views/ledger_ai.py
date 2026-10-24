@@ -13,6 +13,7 @@ from core.ledger_ai import (ANALYSIS_STYLES, AUTO_MODEL_LABEL, DEFAULT_ANALYSIS_
                             AllModelsFailed, ApiError, GeminiClient, LedgerAIEngine, SecretFilter, clean_dataframe,
                             export_workbook)
 from core.state import FULL, XLSX_MIME, default, file_prefix, show_error
+from core.ui import ICONS, page_header, section
 
 
 class ListLogHandler(logging.Handler):
@@ -69,20 +70,19 @@ def risk_style(df):
     return df.style.map(colour, subset=["Risk Score"])
 
 
-st.title("🤖 AI Ledger Mapping, Risk Scoring & Analysis")
-st.caption("Google Gemini maps each ledger, scores its risk 1–5 and (optionally) writes findings with "
-           "suggested audit procedures. The model is chosen automatically with fall-back across every "
-           "Gemini model your key can use.")
+page_header("AI ledger mapping", eyebrow="Google Gemini · Schedule III",
+            intro="Gemini maps each trial balance ledger to Schedule III, scores its risk from 1 to 5 and can write "
+                  "findings with suggested audit procedures. Your ledger data is sent to Google to do this.")
 log = get_logger()
 
 # ------------------------------------------------------------------ API key
-with st.expander("🔑 Gemini API key", expanded=not st.session_state.get("ai_verified")):
+with st.expander("Gemini API key", expanded=not st.session_state.get("ai_verified"),
+                 icon=":material/key:"):
     default("w_ai_key", env_key())
-    k1, k2 = st.columns([3, 1])
+    k1, k2 = st.columns([3, 1], vertical_alignment="bottom")
     api_key = k1.text_input("API key", type="password", key="w_ai_key",
                             help="Create a free key at https://aistudio.google.com/apikey. "
                                  "It is kept only in this browser session and is never written to files or logs.")
-    k2.markdown("<div style='height:1.8rem'></div>", unsafe_allow_html=True)
     if k2.button("Verify key", disabled=not api_key.strip()):
         client = get_client(api_key.strip())
         client.models, client.sticky = [], None
@@ -95,15 +95,15 @@ with st.expander("🔑 Gemini API key", expanded=not st.session_state.get("ai_ve
                 st.session_state.ai_verified = True
                 st.session_state.ai_models = models
                 log.info(f"API key verified. Test call answered by '{used}'. {len(models)} models available.")
-                st.success(f"✅ Key verified — test call answered by **{used}**; {len(models)} models available.")
+                st.success(f"Key verified. {len(models)} models available; the test call was answered by {used}.")
             except (ApiError, AllModelsFailed) as exc:
                 st.session_state.ai_verified = False
                 log.error(f"API key verification failed: {exc}")
-                st.error(f"❌ Verification failed: {exc}")
-    st.caption("Tip: set the GEMINI_API_KEY environment variable before starting the app to pre-fill this box.")
+                st.error(f"The key could not be verified: {exc}")
+    st.caption("Get a free key at aistudio.google.com/apikey. It stays in this browser session only.")
 
 # ------------------------------------------------------------------ settings
-with st.expander("⚙️ Settings", expanded=True):
+with st.expander("Settings", icon=":material/tune:"):
     s1, s2, s3 = st.columns(3)
     models = [AUTO_MODEL_LABEL] + st.session_state.get("ai_models", [])
     if st.session_state.get("w_ai_model") not in models:
@@ -115,7 +115,7 @@ with st.expander("⚙️ Settings", expanded=True):
     s3.number_input("Ledgers per AI request", min_value=5, max_value=100, step=5, key="w_ai_batch")
 
 # ------------------------------------------------------------------ input
-st.subheader("1. Input file")
+section("1. Trial balance")
 st.caption("Columns A to G with a header row: Ledger Name | Opening Dr | Opening Cr | Current Dr | Current Cr | "
            "Closing Dr | Closing Cr. Existing 'Risk Score' / 'Account Mapping' columns are overwritten.")
 up = st.file_uploader("Upload trial balance (.xlsx / .xls / .csv)", type=["xlsx", "xls", "csv"], key="ai_up")
@@ -138,7 +138,7 @@ if up is not None:
             for k in ("ai_mapped", "ai_analysis", "ai_findings", "ai_analysis_model", "ai_prompt_used"):
                 st.session_state.pop(k, None)
             st.session_state.ai_mapping_models = []
-        st.success(f"✅ {len(raw_df):,} ledgers loaded from {up.name}")
+        st.success(f"{len(raw_df):,} ledgers loaded from {up.name}.")
         with st.expander("Preview", expanded=False):
             st.dataframe(raw_df.head(MAX_PREVIEW_ROWS), **FULL, hide_index=True)
     except ValueError as exc:
@@ -156,8 +156,8 @@ def progress_cb(bar):
 
 
 # ------------------------------------------------------------------ mapping
-st.subheader("2. Mapping & risk scoring")
-if st.button("🧭 Run Mapping & Risk Scoring", type="primary", disabled=not ready):
+section("2. Mapping and risk scoring")
+if st.button("Map and score ledgers", type="primary", icon=ICONS["run"], disabled=not ready):
     bar = st.progress(0.0, text="Starting...")
     try:
         engine = LedgerAIEngine(get_client(api_key.strip()), log, preferred_model(), st.session_state.w_ai_standard)
@@ -166,7 +166,7 @@ if st.button("🧭 Run Mapping & Risk Scoring", type="primary", disabled=not rea
         st.session_state.ai_mapping_models = engine.models_used
     except (ApiError, AllModelsFailed, RuntimeError) as exc:
         log.error(str(exc))
-        st.error(f"❌ Mapping failed: {exc}")
+        st.error(f"Mapping did not finish: {exc}")
     except Exception:
         show_error("Mapping failed.", traceback.format_exc())
     bar.empty()
@@ -183,7 +183,7 @@ if mapped is not None:
     st.dataframe(risk_style(m), **FULL, hide_index=True)
 
 # ------------------------------------------------------------------ analysis
-st.subheader("3. AI analysis (optional)")
+section("3. Analysis", "Optional. Ask Gemini to review the mapped ledgers.")
 default("w_ai_prompt", DEFAULT_ANALYSIS_PROMPT)
 default("w_ai_style", ANALYSIS_STYLES[0])
 default("w_ai_automap", True)
@@ -191,7 +191,7 @@ st.text_area("Analysis prompt", key="w_ai_prompt", height=110)
 a1, a2 = st.columns(2)
 a1.selectbox("Answer style", ANALYSIS_STYLES, key="w_ai_style")
 a2.checkbox("Run mapping first if it has not been run", key="w_ai_automap")
-if st.button("🔎 Run AI Analysis", disabled=not ready or not st.session_state.w_ai_prompt.strip()):
+if st.button("Run analysis", icon=ICONS["run"], disabled=not ready or not st.session_state.w_ai_prompt.strip()):
     bar = st.progress(0.0, text="Starting...")
     try:
         client = get_client(api_key.strip())
@@ -213,7 +213,7 @@ if st.button("🔎 Run AI Analysis", disabled=not ready or not st.session_state.
         st.rerun()
     except (ApiError, AllModelsFailed, RuntimeError) as exc:
         log.error(str(exc))
-        st.error(f"❌ Analysis failed: {exc}")
+        st.error(f"The analysis did not finish: {exc}")
     except Exception:
         show_error("Analysis failed.", traceback.format_exc())
     bar.empty()
@@ -235,7 +235,7 @@ if st.session_state.get("ai_analysis"):
             st.markdown(st.session_state.ai_analysis)
 
 # ------------------------------------------------------------------ download
-st.subheader("4. Download")
+section("4. Download")
 if mapped is None and not st.session_state.get("ai_analysis"):
     st.caption("Run the mapping and/or the analysis to enable the download.")
 else:
@@ -244,9 +244,9 @@ else:
                     st.session_state.get("ai_analysis_model", ""), st.session_state.get("ai_mapping_models"),
                     st.session_state.get("ai_findings"))
     stem = Path(up.name).stem if up is not None else "ledger"
-    st.download_button("⬇️ Download processed workbook (.xlsx)", out.getvalue(),
+    st.download_button("Download workbook (.xlsx)", out.getvalue(),
                        f"{file_prefix()}{stem}_AI_processed.xlsx", XLSX_MIME, type="primary")
 
-with st.expander("📜 Logs"):
+with st.expander("Activity log", icon=":material/receipt_long:"):
     logs = st.session_state.get("ai_logs", [])
     st.code("\n".join(logs[-200:]) if logs else "No activity yet.", language=None)

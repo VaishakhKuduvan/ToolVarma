@@ -52,24 +52,21 @@ def read_parties(data: bytes):
 
 
 def validate(placeholders, df, kind):
-    """Returns (is_valid, report_lines)."""
+    """Returns (is_valid, facts, problems, warnings): facts describe the files, problems block generation."""
     headers = [str(h).strip() for h in df.columns]
     missing = [p for p in placeholders if p.strip() not in headers]
-    lines = [f"Format: {kind.upper()}", f"Total rows: {len(df)}", f"Fields in template: {len(placeholders)}"]
+    facts = [("Format", kind.upper()), ("Rows (letters)", f"{len(df):,}"),
+             ("Placeholders in template", f"{len(placeholders)}")]
     if placeholders:
-        lines.append(f"Tags found: {', '.join(placeholders)}")
-    valid = True
+        facts.append(("Tags found", ", ".join(placeholders)))
+    problems, warnings = [], []
     if FILE_NAME_COL not in headers:
-        lines.append(f"❌ Missing '{FILE_NAME_COL}' column in Excel.")
-        valid = False
+        problems.append(f"The Excel file has no '{FILE_NAME_COL}' column.")
     if missing:
-        lines.append(f"❌ Missing Excel headers for: {', '.join(missing)}")
-        valid = False
+        problems.append(f"The Excel file has no column for: {', '.join(missing)}")
     if not placeholders:
-        lines.append("⚠️ 0 placeholders detected. Ensure tags are written as [Variable_Name].")
-    if valid:
-        lines.append("✅ All fields mapped. Ready to generate.")
-    return valid, lines
+        warnings.append("No placeholders were found. Write tags as [Variable_Name].")
+    return not problems, facts, problems, warnings
 
 
 def safe_filename(value, index):

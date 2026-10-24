@@ -4,12 +4,12 @@ One browser-based tool for Indian audit practitioners, built from four separate 
 
 | Page | Based on | What it does |
 |---|---|---|
-| 🎯 1. Risk Assessment (SA 315) | `Audit Sampling using Python/app.py` | Weighted questionnaire across 8 domains → risk score, level and audit approach |
-| 💰 2. Materiality (SA 320) | same | Benchmark recommendation from 3 years of financials → OM, PM, SM, CTT |
-| 📋 3. Sampling (SA 530) | same | Key items, red flags and value-weighted samples from a Trial Balance and a Day Book |
-| 📊 Benford's Law Analysis | `BENFORD_MATERIALITY_NEWCHARTS_ANAMOLIES_NOREPETITION.py` | Nigrini 5-test per materiality tier, Excel workpaper of unique anomalies |
-| 🤖 AI Ledger Mapping | `ledger_ai_studio.py` | Gemini maps ledgers to Schedule III, scores risk 1–5, writes findings |
-| ✉️ External Confirmations | `externalconfirmation.py` | Mail-merge letters from a .docx / fillable .pdf template → ZIP download |
+| 1. Risk assessment (SA 315) | `Audit Sampling using Python/app.py` | Weighted questionnaire across 8 domains → risk score, level and audit approach |
+| 2. Materiality (SA 320) | same | Benchmark recommendation from 3 years of financials → OM, PM, SM, CTT |
+| 3. Sampling (SA 530) | same | Key items, red flags and value-weighted samples from a Trial Balance and a Day Book |
+| Benford's Law | `BENFORD_MATERIALITY_NEWCHARTS_ANAMOLIES_NOREPETITION.py` | Nigrini 5-test per materiality tier, Excel workpaper of unique anomalies |
+| AI ledger mapping | `ledger_ai_studio.py` | Gemini maps ledgers to Schedule III, scores risk 1–5, writes findings |
+| External confirmations | `externalconfirmation.py` | Mail-merge letters from a .docx / fillable .pdf template → ZIP download |
 
 ## Run it
 

@@ -8,6 +8,8 @@ import io
 import pandas as pd
 import streamlit as st
 
+from core.ui import BAND_BADGE
+
 # Compatibility: newer Streamlit uses width='stretch', older uses use_container_width
 FULL = {"width": "stretch"} if "width" in inspect.signature(st.dataframe).parameters else {"use_container_width": True}
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -89,7 +91,7 @@ def daybook_source(uploader_key, label="Upload Day Book (.xlsx/.xls)"):
         st.session_state.daybook_bytes, st.session_state.daybook_name = data, up.name
         return data, up.name
     if st.session_state.daybook_bytes is not None:
-        if st.checkbox(f"Use the Day Book already uploaded: **{st.session_state.daybook_name}**",
+        if st.checkbox(f"Use the Day Book already uploaded ({st.session_state.daybook_name})",
                        value=True, key=f"{uploader_key}_reuse"):
             return st.session_state.daybook_bytes, st.session_state.daybook_name
     return None, None
@@ -97,22 +99,23 @@ def daybook_source(uploader_key, label="Upload Day Book (.xlsx/.xls)"):
 
 def sidebar_status():
     with st.sidebar:
-        st.markdown("### 🗂️ Engagement")
+        st.markdown("**Engagement**")
         default("w_client", "")
         default("w_fy", "")
-        st.text_input("Client name", key="w_client")
+        st.text_input("Client name", key="w_client", placeholder="e.g. ABC Private Limited")
         st.text_input("Financial year", key="w_fy", placeholder="e.g. FY 2025-26")
-        st.caption("Used to prefix downloaded file names.")
-        st.markdown("### 📌 Status")
-        if st.session_state.risk_level:
-            icon = {"High": "🔴", "Medium": "🟡", "Low": "🟢"}[st.session_state.risk_level]
-            st.markdown(f"**Risk:** {icon} {st.session_state.risk_level} ({st.session_state.risk_score_pct:.1f}%)")
+        st.caption("Added to the start of every downloaded file name.")
+        st.divider()
+        st.markdown("**Progress**")
+        level = st.session_state.risk_level
+        if level:
+            st.badge(f"Risk: {level} ({st.session_state.risk_score_pct:.1f}%)", color=BAND_BADGE[level])
         else:
-            st.markdown("**Risk:** not assessed")
+            st.badge("Risk: not assessed", color="gray")
         if st.session_state.overall_materiality is not None:
-            st.markdown(f"**OM:** ₹ {st.session_state.overall_materiality:,.2f} L  \n"
-                        f"**PM:** ₹ {st.session_state.performance_materiality:,.2f} L")
+            st.badge(f"OM ₹ {st.session_state.overall_materiality:,.2f} L", color="blue")
+            st.badge(f"PM ₹ {st.session_state.performance_materiality:,.2f} L", color="blue")
         else:
-            st.markdown("**Materiality:** not computed")
+            st.badge("Materiality: not computed", color="gray")
         if st.session_state.daybook_name:
-            st.markdown(f"**Day Book:** {st.session_state.daybook_name}")
+            st.caption(f"Day Book loaded: {st.session_state.daybook_name}")

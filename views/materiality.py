@@ -6,38 +6,44 @@ import pandas as pd
 import streamlit as st
 
 from core.state import FULL, XLSX_MIME, default, file_prefix, show_error, to_excel_bytes
+from core.ui import BAND_BADGE, ICONS, page_header, section
 
-st.title("💰 Materiality — SA 320")
+page_header("Materiality", eyebrow="Step 2 · SA 320",
+            intro="Describe the entity and enter three years of figures. The tool recommends a benchmark, and the "
+                  "risk level from step 1 sets how much of overall materiality is used as performance materiality.")
 if not st.session_state.risk_level:
-    st.warning("⚠️ Please complete and compute **1. Risk Assessment** first.")
-    st.page_link("views/risk.py", label="Go to Risk Assessment", icon="⬅️")
+    st.warning("Complete the risk assessment first. The risk level is needed to set performance materiality.")
+    st.page_link("views/risk.py", label="Go to risk assessment", icon=ICONS["back"])
 else:
-    st.info(f"Carried-over Risk Level: **{st.session_state.risk_level}** "
-            f"({st.session_state.risk_score_pct:.1f}%)")
+    st.badge(f"Risk level from step 1: {st.session_state.risk_level} ({st.session_state.risk_score_pct:.1f}%)",
+             color=BAND_BADGE[st.session_state.risk_level])
 
 ENTITY_TYPES = ["Private Limited / Others", "Listed", "Unlisted Public", "NBFC", "Bank", "Insurance",
                 "PSU", "Section 8 / NPO", "Start-up / Loss-making"]
 
-with st.expander("🏢 Entity Profile", expanded=True):
+section("1. Entity")
+with st.container(border=True):
     default("w_m_entity", ENTITY_TYPES[0])
     default("w_m_users", [])
-    entity_type = st.selectbox("Entity Type", ENTITY_TYPES, key="w_m_entity")
-    users = st.multiselect("Primary users of FS", [
+    e1, e2 = st.columns(2)
+    entity_type = e1.selectbox("Entity type", ENTITY_TYPES, key="w_m_entity")
+    users = e2.multiselect("Primary users of the financial statements", [
         "Investors", "Bankers", "Regulators", "Promoters", "Donors", "Government",
-        "Customers/Suppliers", "Tax Authorities"], key="w_m_users")
+        "Customers/Suppliers", "Tax Authorities"], key="w_m_users", placeholder="Choose one or more")
 
-with st.expander("📊 3-Year Financials (₹ Lakhs)", expanded=True):
+section("2. Financials", "All amounts in ₹ lakhs.")
+with st.container(border=True):
     cols = st.columns(3)
     fin = {}
     for col, yr in zip(cols, ["Year T-2", "Year T-1", "Year T (Current)"]):
         col.markdown(f"**{yr}**")
         fin[yr] = {}
-        for code, field, label in [("pbt", "PBT", "PBT"), ("rev", "Revenue", "Revenue / Turnover"),
-                                   ("ast", "Assets", "Total Assets"), ("nw", "NW", "Net Worth"),
-                                   ("exp", "Exp", "Total Expenditure")]:
+        for code, field, label in [("pbt", "PBT", "Profit before tax"), ("rev", "Revenue", "Revenue / turnover"),
+                                   ("ast", "Assets", "Total assets"), ("nw", "NW", "Net worth"),
+                                   ("exp", "Exp", "Total expenditure")]:
             key = f"w_{code}_{yr}"
             default(key, 0.0)
-            fin[yr][field] = col.number_input(label, key=key)
+            fin[yr][field] = col.number_input(label, key=key, format="%.2f")
 yrs = list(fin)
 cur = fin[yrs[2]]
 pbts = [fin[y]["PBT"] for y in yrs]
@@ -69,14 +75,13 @@ else:
 st.session_state.benchmark_choice, st.session_state.benchmark_pct = bm, pct
 st.session_state.benchmark_value, st.session_state.benchmark_reason = val, why
 
-st.markdown("### 🤖 Recommended Benchmark")
+section("3. Benchmark")
 r1, r2, r3 = st.columns(3)
-r1.metric("Benchmark", bm)
-r2.metric("Percentage", f"{pct}%")
-r3.metric("Benchmark Value (₹ Lakhs)", f"{val:,.2f}")
-st.info(f"**Rationale:** {why}")
+r1.metric("Recommended benchmark", bm, border=True)
+r2.metric("Percentage applied", f"{pct}%", border=True)
+r3.metric("Benchmark value (₹ lakhs)", f"{val:,.2f}", border=True)
+st.markdown(f"**Why this benchmark.** {why}")
 
-st.markdown("### 🔍 Cross-check of Alternative Benchmarks")
 xr = pd.DataFrame([
     ["5% of Current PBT", 0.05 * cur["PBT"], "Stable, profit-oriented entities"],
     ["5% of 3-yr Avg PBT", 0.05 * avg_pbt, "Volatile profits"],
@@ -86,8 +91,10 @@ xr = pd.DataFrame([
     ["1% of Net Worth", 0.01 * cur["NW"], "Asset-heavy / equity-focused users"],
     ["0.5% of Total Expenditure", 0.005 * cur["Exp"], "NPO / Section 8"],
 ], columns=["Basis", "Amount (₹ Lakhs)", "Used For"])
-xr["Amount (₹ Lakhs)"] = xr["Amount (₹ Lakhs)"].map("{:,.2f}".format)
-st.dataframe(xr, **FULL, hide_index=True)
+with st.expander("Compare with other benchmarks"):
+    shown_xr = xr.copy()
+    shown_xr["Amount (₹ Lakhs)"] = shown_xr["Amount (₹ Lakhs)"].map("{:,.2f}".format)
+    st.dataframe(shown_xr, **FULL, hide_index=True)
 
 
 def _seed_override():
@@ -99,63 +106,68 @@ def _seed_override():
 
 
 default("w_m_override", False)
-if st.checkbox("✏️ Manual override of benchmark", key="w_m_override", on_change=_seed_override):
-    o1, o2 = st.columns(2)
-    default("w_ov_val", float(val))
-    default("w_ov_pct", float(pct))
-    default("w_ov_reason", why)
-    st.session_state.benchmark_value = o1.number_input("Benchmark value (₹ Lakhs)", key="w_ov_val")
-    st.session_state.benchmark_pct = o2.number_input("Percentage (%)", step=0.25, key="w_ov_pct")
-    st.session_state.benchmark_reason = st.text_area("Rationale", key="w_ov_reason")
-    st.session_state.benchmark_choice = f"{bm} (manual override)"
+if st.toggle("Override the recommended benchmark", key="w_m_override", on_change=_seed_override):
+    with st.container(border=True):
+        o1, o2 = st.columns(2)
+        default("w_ov_val", float(val))
+        default("w_ov_pct", float(pct))
+        default("w_ov_reason", why)
+        st.session_state.benchmark_value = o1.number_input("Benchmark value (₹ lakhs)", key="w_ov_val",
+                                                           format="%.2f")
+        st.session_state.benchmark_pct = o2.number_input("Percentage (%)", step=0.25, key="w_ov_pct")
+        st.session_state.benchmark_reason = st.text_area("Rationale for the override", key="w_ov_reason")
+        st.session_state.benchmark_choice = f"{bm} (manual override)"
 
-with st.expander("🧮 Compute Materiality", expanded=True):
-    current_inputs = (st.session_state.benchmark_value, st.session_state.benchmark_pct, st.session_state.risk_level)
-    if not st.session_state.risk_level:
-        st.warning("Complete Risk Assessment to compute materiality.")
-    elif st.button("Compute Materiality", type="primary"):
-        try:
-            om = st.session_state.benchmark_value * st.session_state.benchmark_pct / 100
-            pm_pct = {"High": 55, "Medium": 70, "Low": 80}[st.session_state.risk_level]
-            pm = om * pm_pct / 100
-            st.session_state.overall_materiality = om
-            st.session_state.pm_pct = pm_pct
-            st.session_state.performance_materiality = pm
-            st.session_state.clearly_trivial = om * 0.05
-            st.session_state.specific_materiality = max(om * 0.10, 1.0)
-            st.session_state.materiality_inputs = current_inputs
-        except Exception:
-            show_error("Materiality computation failed.", traceback.format_exc())
-    if st.session_state.overall_materiality is not None:
-        if st.session_state.get("materiality_inputs") != current_inputs:
-            st.warning("⚠️ Inputs or risk level changed since materiality was last computed — click "
-                       "**Compute Materiality** again to refresh.")
-        k1, k2, k3, k4 = st.columns(4)
-        k1.metric("Overall Materiality", f"₹ {st.session_state.overall_materiality:,.2f} L",
-                  help="Benchmark value × benchmark %")
-        k2.metric("Performance Materiality", f"₹ {st.session_state.performance_materiality:,.2f} L",
-                  help=f"OM × {st.session_state.pm_pct}% (High 55 / Medium 70 / Low 80)")
-        k3.metric("Specific Materiality", f"₹ {st.session_state.specific_materiality:,.2f} L",
-                  help="max(10% of OM, ₹1 Lakh) for RPT, director remuneration, CSR etc.")
-        k4.metric("Clearly Trivial", f"₹ {st.session_state.clearly_trivial:,.2f} L", help="5% of OM")
-        summ = pd.DataFrame([
-            ["Benchmark", st.session_state.benchmark_choice, st.session_state.benchmark_value],
-            ["Benchmark %", f"{st.session_state.benchmark_pct}%", None],
-            ["Overall Materiality (OM)", "Benchmark × %", st.session_state.overall_materiality],
-            [f"Performance Materiality ({st.session_state.pm_pct}% of OM)", st.session_state.risk_level + " risk",
-             st.session_state.performance_materiality],
-            ["Specific Materiality", "max(10% OM, 1.0)", st.session_state.specific_materiality],
-            ["Clearly Trivial Threshold", "5% of OM", st.session_state.clearly_trivial],
-        ], columns=["Item", "Value", "Amount ₹ Lakhs"])
+section("4. Materiality")
+current_inputs = (st.session_state.benchmark_value, st.session_state.benchmark_pct, st.session_state.risk_level)
+if st.session_state.risk_level and st.button("Calculate materiality", type="primary", icon=ICONS["run"]):
+    try:
+        om = st.session_state.benchmark_value * st.session_state.benchmark_pct / 100
+        pm_pct = {"High": 55, "Medium": 70, "Low": 80}[st.session_state.risk_level]
+        pm = om * pm_pct / 100
+        st.session_state.overall_materiality = om
+        st.session_state.pm_pct = pm_pct
+        st.session_state.performance_materiality = pm
+        st.session_state.clearly_trivial = om * 0.05
+        st.session_state.specific_materiality = max(om * 0.10, 1.0)
+        st.session_state.materiality_inputs = current_inputs
+    except Exception:
+        show_error("Materiality could not be calculated.", traceback.format_exc())
+if not st.session_state.risk_level:
+    st.caption("Available once the risk assessment is complete.")
+
+if st.session_state.overall_materiality is not None:
+    if st.session_state.get("materiality_inputs") != current_inputs:
+        st.warning("The inputs or risk level have changed since this was calculated. "
+                   "Click Calculate materiality again to update it.")
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Overall materiality", f"₹ {st.session_state.overall_materiality:,.2f} L", border=True,
+              help="Benchmark value × benchmark %")
+    k2.metric("Performance materiality", f"₹ {st.session_state.performance_materiality:,.2f} L", border=True,
+              help=f"OM × {st.session_state.pm_pct}% (High 55 / Medium 70 / Low 80)")
+    k3.metric("Specific materiality", f"₹ {st.session_state.specific_materiality:,.2f} L", border=True,
+              help="max(10% of OM, ₹1 Lakh) for RPT, director remuneration, CSR etc.")
+    k4.metric("Clearly trivial", f"₹ {st.session_state.clearly_trivial:,.2f} L", border=True, help="5% of OM")
+    summ = pd.DataFrame([
+        ["Benchmark", st.session_state.benchmark_choice, st.session_state.benchmark_value],
+        ["Benchmark %", f"{st.session_state.benchmark_pct}%", None],
+        ["Overall Materiality (OM)", "Benchmark × %", st.session_state.overall_materiality],
+        [f"Performance Materiality ({st.session_state.pm_pct}% of OM)", st.session_state.risk_level + " risk",
+         st.session_state.performance_materiality],
+        ["Specific Materiality", "max(10% OM, 1.0)", st.session_state.specific_materiality],
+        ["Clearly Trivial Threshold", "5% of OM", st.session_state.clearly_trivial],
+    ], columns=["Item", "Value", "Amount ₹ Lakhs"])
+    with st.expander("How these were calculated"):
         shown = summ.copy()
         shown["Amount ₹ Lakhs"] = shown["Amount ₹ Lakhs"].map(lambda x: "" if x is None else f"{x:,.2f}")
         st.dataframe(shown, **FULL, hide_index=True)
-        profile = pd.DataFrame([["Entity Type", entity_type], ["Primary users", ", ".join(users)],
-                                ["Rationale", st.session_state.benchmark_reason]], columns=["Item", "Value"])
-        financials = pd.DataFrame(fin).T.rename_axis("Year").reset_index()
-        st.download_button("⬇️ Download Materiality workpaper (.xlsx)",
-                           to_excel_bytes({"Materiality": summ, "Entity_Profile": profile,
-                                           "Financials_Lakhs": financials, "Cross_Check": xr}),
-                           f"{file_prefix()}Materiality_SA320.xlsx", XLSX_MIME)
-        st.success("✅ Materiality saved. Proceed to **3. Sampling** or **Benford's Law Analysis**.")
-        st.page_link("views/sampling.py", label="Go to Sampling (SA 530)", icon="➡️")
+    profile = pd.DataFrame([["Entity Type", entity_type], ["Primary users", ", ".join(users)],
+                            ["Rationale", st.session_state.benchmark_reason]], columns=["Item", "Value"])
+    financials = pd.DataFrame(fin).T.rename_axis("Year").reset_index()
+    c1, c2, c3 = st.columns(3)
+    c1.download_button("Download workpaper (.xlsx)",
+                       to_excel_bytes({"Materiality": summ, "Entity_Profile": profile,
+                                       "Financials_Lakhs": financials, "Cross_Check": xr}),
+                       f"{file_prefix()}Materiality_SA320.xlsx", XLSX_MIME, icon=ICONS["download"])
+    c2.page_link("views/sampling.py", label="Continue to sampling", icon=ICONS["next"])
+    c3.page_link("views/benford.py", label="Use in Benford's Law", icon=ICONS["next"])
