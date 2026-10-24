@@ -30,8 +30,11 @@ BAND_TINTS = {"High": "rgba(220, 38, 38, 0.16)", "Medium": "rgba(217, 119, 6, 0.
               "Low": "rgba(22, 163, 74, 0.16)"}
 BAND_BADGE = {"High": "red", "Medium": "orange", "Low": "green"}
 
+# The theme names these fonts, but some Streamlit builds (including the Community Cloud one)
+# don't add the theme's font stylesheets, so load them here as well.
 _CSS = """
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,600;6..72,700&display=swap');
 .block-container { padding-bottom: 4rem; max-width: 1180px; }
 h1, h2, h3 { letter-spacing: -0.01em; }
 .as-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
